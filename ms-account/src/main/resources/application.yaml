@@ -1,0 +1,14 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: demo
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/banking_system
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+user-service:
+  url: http://localhost:8081
