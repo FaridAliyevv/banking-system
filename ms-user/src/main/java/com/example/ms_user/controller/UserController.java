@@ -1,9 +1,10 @@
 package com.example.ms_user.controller;
 
 import com.example.ms_user.dto.request.CreateUserRequest;
+import com.example.ms_user.dto.request.LoginRequest;
 import com.example.ms_user.dto.request.UpdateUserRequest;
+import com.example.ms_user.dto.response.LoginResponse;
 import com.example.ms_user.dto.response.UserResponse;
-import com.example.ms_user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,11 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return userService.login(request);
+    }
 
     @PostMapping
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
