@@ -1,15 +1,19 @@
 package com.example.ms_user.service.impl;
 
 import com.example.ms_user.dto.request.CreateUserRequest;
+import com.example.ms_user.dto.request.LoginRequest;
 import com.example.ms_user.dto.request.UpdateUserRequest;
+import com.example.ms_user.dto.response.LoginResponse;
 import com.example.ms_user.dto.response.UserResponse;
 import com.example.ms_user.entity.Role;
 import com.example.ms_user.entity.User;
 import com.example.ms_user.exception.EmailAlreadyExistsException;
+import com.example.ms_user.exception.InvalidCredentialsException;
 import com.example.ms_user.exception.InvalidUserDataException;
 import com.example.ms_user.exception.UserNotFoundException;
 import com.example.ms_user.mapper.UserMapper;
 import com.example.ms_user.repository.UserRepository;
+import com.example.ms_user.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +34,9 @@ class UserServiceImplTest {
 
     @Mock
     private UserMapper mapper;
+
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private UserServiceImpl service;
@@ -287,5 +294,69 @@ class UserServiceImplTest {
                 () -> service.deleteUser(userId));
 
         assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void testLogin() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("john@gmail.com");
+        request.setPassword("12345678");
+
+        User user = User.builder()
+                .id(1L)
+                .email("john@gmail.com")
+                .password("12345678")
+                .role(Role.USER)
+                .build();
+
+        String token = "test-jwt-token";
+
+        when(repository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
+
+        when(jwtService.generateToken(user.getId(), user.getRole())).thenReturn(token);
+
+        LoginResponse result = service.login(request);
+
+        assertEquals(token, result.getToken());
+    }
+
+    @Test
+    void testLogin_shouldThrowException_whenPasswordIsInvalid() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("john@gmail.com");
+        request.setPassword("wrong password");
+
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("john@gmail.com");
+        user.setPassword("password123");
+        user.setRole(Role.USER);
+
+        when(repository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.of(user));
+
+        InvalidCredentialsException exception = assertThrows(
+                InvalidCredentialsException.class,
+                () -> service.login(request)
+        );
+
+        assertEquals("Invalid credentials", exception.getMessage());
+    }
+
+    @Test
+    void testLogin_shouldThrowException_whenUserNotFound() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("unknown@gmail.com");
+        request.setPassword("12345678");
+
+        when(repository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.empty());
+
+        InvalidCredentialsException exception = assertThrows(
+                InvalidCredentialsException.class,
+                () -> service.login(request)
+        );
+
+        assertEquals("Invalid credentials", exception.getMessage());
     }
 }

@@ -3,7 +3,6 @@ package com.example.ms_transaction.entity;
 import com.example.ms_transaction.enums.TransactionStatus;
 import com.example.ms_transaction.enums.TransactionType;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 

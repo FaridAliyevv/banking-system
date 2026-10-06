@@ -1,6 +1,5 @@
 package com.example.ms_transaction.mapper;
 
-import com.example.ms_transaction.dto.request.CreateTransactionRequest;
 import com.example.ms_transaction.dto.request.DepositRequest;
 import com.example.ms_transaction.dto.request.TransferRequest;
 import com.example.ms_transaction.dto.request.WithdrawalRequest;
@@ -10,17 +9,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TransactionMapper {
-
-//    public Transaction toEntity(CreateTransactionRequest request) {
-//        Transaction transaction = new Transaction();
-//
-//        transaction.setFromIban(request.getFromIban());
-//        transaction.setToIban(request.getToIban());
-//        transaction.setAmount(request.getAmount());
-//        transaction.setDescription(request.getDescription());
-//
-//        return transaction;
-//    }
 
     public Transaction toEntity(TransferRequest request) {
         Transaction transaction = new Transaction();

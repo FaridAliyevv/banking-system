@@ -8,6 +8,7 @@ import com.example.ms_transaction.dto.response.AccountResponse;
 import com.example.ms_transaction.dto.response.TransactionResponse;
 import com.example.ms_transaction.entity.Transaction;
 import com.example.ms_transaction.enums.AccountStatus;
+import com.example.ms_transaction.enums.AccountType;
 import com.example.ms_transaction.enums.TransactionStatus;
 import com.example.ms_transaction.enums.TransactionType;
 import com.example.ms_transaction.exception.*;
@@ -44,29 +45,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
-        request.setDescription("transfer description");
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
         Transaction savedTransaction = new Transaction();
@@ -92,29 +95,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer_shouldThrowException_whenSourceAccountNotActive() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
-        request.setDescription("transfer description");
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.BLOCKED
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.BLOCKED)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -135,29 +140,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer_shouldThrowException_whenDestinationAccountNotActive() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
-        request.setDescription("transfer description");
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.BLOCKED
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.BLOCKED)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -178,28 +185,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer_shouldThrowException_whenSourceAndDestinationAreEqual() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -220,28 +230,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer_shouldThrowException_whenAmountIsZero() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(BigDecimal.ZERO);
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(BigDecimal.ZERO)
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -262,28 +275,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer_shouldThrowException_whenAmountIsNull() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(null);
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(null)
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -304,28 +320,31 @@ class TransactionServiceImplTest {
 
     @Test
     void testTransfer_shouldThrowException_whenBalanceIsInsufficient() {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("600.00"));
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("600.00"))
+                .description("transfer description")
+                .build();
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -346,18 +365,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testDeposit() {
-        DepositRequest request = new DepositRequest();
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        DepositRequest request = DepositRequest.builder()
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
         Transaction savedTransaction = new Transaction();
@@ -380,18 +401,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testDeposit_shouldThrowException_whenAccountNotActive() {
-        DepositRequest request = new DepositRequest();
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.BLOCKED
-        );
+        DepositRequest request = DepositRequest.builder()
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.BLOCKED)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -410,18 +433,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testDeposit_shouldThrowException_whenAmountIsNull() {
-        DepositRequest request = new DepositRequest();
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(null);
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        DepositRequest request = DepositRequest.builder()
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(null)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -440,18 +465,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testDeposit_shouldThrowException_whenAmountIsZero() {
-        DepositRequest request = new DepositRequest();
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(BigDecimal.ZERO);
 
-        AccountResponse toAccount = new AccountResponse(
-                2L,
-                2L,
-                "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        DepositRequest request = DepositRequest.builder()
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(BigDecimal.ZERO)
+                .build();
+
+        AccountResponse toAccount = AccountResponse.builder()
+                .id(2L)
+                .userId(2L)
+                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .balance(new BigDecimal("700.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -470,18 +497,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testWithdrawal() {
-        WithdrawalRequest request = new WithdrawalRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setAmount(new BigDecimal("100.00"));
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("500.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        WithdrawalRequest request = WithdrawalRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .amount(new BigDecimal("100.00"))
+                .build();
+
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
         Transaction savedTransaction = new Transaction();
@@ -502,18 +531,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testWithdrawal_shouldThrowException_whenAccountNotActive() {
-        WithdrawalRequest request = new WithdrawalRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setAmount(new BigDecimal("100.00"));
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.BLOCKED
-        );
+        WithdrawalRequest request = WithdrawalRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .amount(new BigDecimal("100.00"))
+                .build();
+
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.BLOCKED)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -532,18 +563,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testWithdrawal_shouldThrowException_whenAmountIsNull() {
-        WithdrawalRequest request = new WithdrawalRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setAmount(null);
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        WithdrawalRequest request = WithdrawalRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .amount(null)
+                .build();
+
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -562,18 +595,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testWithdrawal_shouldThrowException_whenAmountIsZero() {
-        WithdrawalRequest request = new WithdrawalRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setAmount(BigDecimal.ZERO);
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        WithdrawalRequest request = WithdrawalRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .amount(BigDecimal.ZERO)
+                .build();
+
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
@@ -592,18 +627,20 @@ class TransactionServiceImplTest {
 
     @Test
     void testWithdrawal_shouldThrowException_whenBalanceIsInsufficient() {
-        WithdrawalRequest request = new WithdrawalRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setAmount(new BigDecimal("800.00"));
 
-        AccountResponse fromAccount = new AccountResponse(
-                1L,
-                1L,
-                "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD",
-                new BigDecimal("700.00"),
-                "DEBIT",
-                AccountStatus.ACTIVE
-        );
+        WithdrawalRequest request = WithdrawalRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .amount(new BigDecimal("800.00"))
+                .build();
+
+        AccountResponse fromAccount = AccountResponse.builder()
+                .id(1L)
+                .userId(1L)
+                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         Transaction transaction = new Transaction();
 
