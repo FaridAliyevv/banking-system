@@ -8,6 +8,7 @@ import com.example.ms_account.dto.response.UserResponse;
 import com.example.ms_account.entity.Account;
 import com.example.ms_account.enums.AccountStatus;
 import com.example.ms_account.enums.AccountType;
+import com.example.ms_account.enums.UserRole;
 import com.example.ms_account.exception.*;
 import com.example.ms_account.mapper.AccountMapper;
 import com.example.ms_account.repository.AccountRepository;
@@ -51,14 +52,16 @@ class AccountServiceImplTest {
         Account savedAccount = new Account();
         AccountResponse response = new AccountResponse();
 
-        when(client.getUserById(1L)).thenReturn(new UserResponse(
-                1L,
-                "John",
-                "Smith",
-                "john@gmail.com",
-                "12345678",
-                "USER"
-        ));
+        UserResponse userResponse = UserResponse.builder()
+                .id(1L)
+                .firstName("John")
+                .lastName("Smith")
+                .email("john@gmail.com")
+                .password("12345678")
+                .role(UserRole.USER)
+                .build();
+
+        when(client.getUserById(1L)).thenReturn(userResponse);
 
         when(mapper.toEntity(request)).thenReturn(account);
 
@@ -198,10 +201,11 @@ class AccountServiceImplTest {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setBalance(new BigDecimal("500.00"));
-        account.setAccountStatus(AccountStatus.ACTIVE);
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -215,10 +219,11 @@ class AccountServiceImplTest {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setBalance(new BigDecimal("500.00"));
-        account.setAccountStatus(AccountStatus.BLOCKED);
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.BLOCKED)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -232,10 +237,11 @@ class AccountServiceImplTest {
     void testIncreaseBalance_shouldThrowException_whenAmountIsZero() {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setBalance(new BigDecimal("500.00"));
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -251,10 +257,11 @@ class AccountServiceImplTest {
     void testIncreaseBalance_shouldThrowException_whenAmountIsNull() {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setBalance(new BigDecimal("500.00"));
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -270,10 +277,11 @@ class AccountServiceImplTest {
     void testIncreaseBalance_shouldThrowException_whenAmountIsNegative() {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setBalance(new BigDecimal("500.00"));
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -290,10 +298,11 @@ class AccountServiceImplTest {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setBalance(new BigDecimal("500.00"));
-        account.setAccountStatus(AccountStatus.ACTIVE);
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -307,10 +316,11 @@ class AccountServiceImplTest {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setBalance(new BigDecimal("500.00"));
-        account.setAccountStatus(AccountStatus.BLOCKED);
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.BLOCKED)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -324,10 +334,11 @@ class AccountServiceImplTest {
     void testDecreaseBalance_shouldThrowException_whenAmountIsZero() {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setBalance(new BigDecimal("500.00"));
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -343,10 +354,11 @@ class AccountServiceImplTest {
     void testDecreaseBalance_shouldThrowException_whenAmountIsNull() {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setBalance(new BigDecimal("500.00"));
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -362,10 +374,11 @@ class AccountServiceImplTest {
     void testDecreaseBalance_shouldThrowException_whenAmountIsNegative() {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setBalance(new BigDecimal("500.00"));
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -382,10 +395,11 @@ class AccountServiceImplTest {
         String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("600.00");
 
-        Account account = new Account();
-        account.setIban(iban);
-        account.setBalance(new BigDecimal("500.00"));
-        account.setAccountStatus(AccountStatus.ACTIVE);
+        Account account = Account.builder()
+                .iban(iban)
+                .balance(new BigDecimal("500.00"))
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         when(repository.findByIban(iban)).thenReturn(Optional.of(account));
 
@@ -403,10 +417,12 @@ class AccountServiceImplTest {
         request.setAccountType(AccountType.SAVINGS);
         request.setAccountStatus(AccountStatus.BLOCKED);
 
-        Account account = new Account();
-        account.setId(accountId);
-        account.setAccountType(AccountType.DEBIT);
-        account.setAccountStatus(AccountStatus.ACTIVE);
+        Account account = Account.builder()
+                .id(accountId)
+                .balance(new BigDecimal("500.00"))
+                .accountType(AccountType.DEBIT)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
 
         AccountResponse response = new AccountResponse();
 

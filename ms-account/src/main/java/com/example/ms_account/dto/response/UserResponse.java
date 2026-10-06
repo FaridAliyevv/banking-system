@@ -1,11 +1,19 @@
 package com.example.ms_account.dto.response;
 
-public record UserResponse(
-        Long id,
-        String firstName,
-        String lastName,
-        String email,
-        String password,
-        String role
-) {
+import com.example.ms_account.enums.UserRole;
+import lombok.*;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserResponse {
+
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private UserRole role;
 }

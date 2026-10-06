@@ -1,13 +1,17 @@
 package com.example.ms_user.service.impl;
 
 import com.example.ms_user.dto.request.CreateUserRequest;
+import com.example.ms_user.dto.request.LoginRequest;
 import com.example.ms_user.dto.request.UpdateUserRequest;
+import com.example.ms_user.dto.response.LoginResponse;
 import com.example.ms_user.dto.response.UserResponse;
 import com.example.ms_user.entity.Role;
 import com.example.ms_user.entity.User;
 import com.example.ms_user.exception.EmailAlreadyExistsException;
+import com.example.ms_user.exception.InvalidCredentialsException;
 import com.example.ms_user.exception.InvalidUserDataException;
 import com.example.ms_user.exception.UserNotFoundException;
+import com.example.ms_user.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import com.example.ms_user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
@@ -22,6 +26,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final UserMapper mapper;
+    private final JwtService jwtService;
 
     @Override
     public UserResponse createUser(CreateUserRequest request) {
@@ -94,5 +99,23 @@ public class UserServiceImpl implements UserService {
                         .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         repository.deleteById(id);
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+
+        User user = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
+
+        if (!user.getPassword().equals(request.getPassword())) {
+            throw new InvalidCredentialsException("Invalid credentials");
+        }
+
+        String token = jwtService.generateToken(
+                user.getId(),
+                user.getRole()
+        );
+
+        return new LoginResponse(token);
     }
 }

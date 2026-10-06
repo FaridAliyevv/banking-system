@@ -7,7 +7,6 @@ public class IbanGenerator {
 
     public static String generate() {
         Iban randomIban = Iban.random(CountryCode.AZ);
-        System.out.println("-----------------"+randomIban.toFormattedString());
         return randomIban.toFormattedString();
     }
 }

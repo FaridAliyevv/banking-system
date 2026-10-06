@@ -1,7 +1,9 @@
 package com.example.ms_user.controller;
 
 import com.example.ms_user.dto.request.CreateUserRequest;
+import com.example.ms_user.dto.request.LoginRequest;
 import com.example.ms_user.dto.request.UpdateUserRequest;
+import com.example.ms_user.dto.response.LoginResponse;
 import com.example.ms_user.dto.response.UserResponse;
 import com.example.ms_user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +34,22 @@ class UserControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    void testLogin() throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("john@gmail.com");
+        request.setPassword("12345678");
+
+        LoginResponse response = new LoginResponse("token");
+
+        when(service.login(request)).thenReturn(response);
+
+        mockMvc.perform(post("/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
 
     @Test
     void testCreateUser() throws Exception{

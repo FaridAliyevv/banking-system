@@ -1,7 +1,6 @@
 package com.example.ms_transaction.service.impl;
 
 import com.example.ms_transaction.client.AccountClient;
-import com.example.ms_transaction.dto.request.CreateTransactionRequest;
 import com.example.ms_transaction.dto.request.DepositRequest;
 import com.example.ms_transaction.dto.request.TransferRequest;
 import com.example.ms_transaction.dto.request.WithdrawalRequest;
@@ -41,7 +40,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setTransactionType(TransactionType.TRANSFER);
         transaction.setCreatedAt(LocalDateTime.now());
 
-        if (fromIban.accountStatus() != AccountStatus.ACTIVE) {
+        if (fromIban.getAccountStatus() != AccountStatus.ACTIVE) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -49,7 +48,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InactiveAccountException("Source account is not active");
         }
 
-        if (toIban.accountStatus() != AccountStatus.ACTIVE) {
+        if (toIban.getAccountStatus() != AccountStatus.ACTIVE) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -73,7 +72,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidAmountException("Amount must be greater than zero");
         }
 
-        if (fromIban.balance().compareTo(request.getAmount()) <= 0) {
+        if (fromIban.getBalance().compareTo(request.getAmount()) <= 0) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -107,7 +106,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setTransactionType(TransactionType.DEPOSIT);
         transaction.setCreatedAt(LocalDateTime.now());
 
-        if (account.accountStatus() != AccountStatus.ACTIVE) {
+        if (account.getAccountStatus() != AccountStatus.ACTIVE) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -145,7 +144,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setTransactionType(TransactionType.WITHDRAWAL);
         transaction.setCreatedAt(LocalDateTime.now());
 
-        if (account.accountStatus() != AccountStatus.ACTIVE) {
+        if (account.getAccountStatus() != AccountStatus.ACTIVE) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -161,7 +160,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidAmountException("Amount must be greater than zero");
         }
 
-        if (account.balance().compareTo(request.getAmount()) <= 0) {
+        if (account.getBalance().compareTo(request.getAmount()) <= 0) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);

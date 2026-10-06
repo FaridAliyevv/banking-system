@@ -4,7 +4,6 @@ import com.example.ms_transaction.dto.request.DepositRequest;
 import com.example.ms_transaction.dto.request.TransferRequest;
 import com.example.ms_transaction.dto.request.WithdrawalRequest;
 import com.example.ms_transaction.dto.response.TransactionResponse;
-import com.example.ms_transaction.entity.Transaction;
 import com.example.ms_transaction.service.TransactionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +34,13 @@ class TransactionControllerTest {
 
     @Test
     void testTransfer() throws Exception {
-        TransferRequest request = new TransferRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
-        request.setDescription("transfer description");
+
+        TransferRequest request = TransferRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .description("transfer description")
+                .build();
 
         TransactionResponse response = new TransactionResponse();
 
@@ -53,10 +54,12 @@ class TransactionControllerTest {
 
     @Test
     void testDeposit() throws Exception {
-        DepositRequest request = new DepositRequest();
-        request.setToIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA");
-        request.setAmount(new BigDecimal("100.00"));
-        request.setDescription("deposit description");
+
+        DepositRequest request = DepositRequest.builder()
+                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .amount(new BigDecimal("100.00"))
+                .description("deposit description")
+                .build();
 
         TransactionResponse response = new TransactionResponse();
 
@@ -70,10 +73,12 @@ class TransactionControllerTest {
 
     @Test
     void testWithdrawal() throws Exception {
-        WithdrawalRequest request = new WithdrawalRequest();
-        request.setFromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD");
-        request.setAmount(new BigDecimal("100.00"));
-        request.setDescription("withdrawal description");
+
+        WithdrawalRequest request = WithdrawalRequest.builder()
+                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .amount(new BigDecimal("100.00"))
+                .description("withdrawal description")
+                .build();
 
         TransactionResponse response = new TransactionResponse();
 
