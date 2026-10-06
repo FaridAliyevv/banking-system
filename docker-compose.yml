@@ -1,0 +1,81 @@
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: banking-mysql
+    environment:
+      MYSQL_DATABASE: banking_system
+      MYSQL_USER: springstudent
+      MYSQL_PASSWORD: springstudent
+      MYSQL_ROOT_PASSWORD: springstudent
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "springstudent", "-pspringstudent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ms-user:
+    image: ms-user:latest
+    container_name: ms-user
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/banking_system
+      DB_USERNAME: springstudent
+      DB_PASSWORD: springstudent
+      JWT_SECRET: my-super-secret-jwt-key-for-banking-system-2026
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  ms-account:
+    image: ms-account:latest
+    container_name: ms-account
+    ports:
+      - "8082:8082"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/banking_system
+      DB_USERNAME: springstudent
+      DB_PASSWORD: springstudent
+      USER_SERVICE_URL: http://ms-user:8081
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ms-user:
+        condition: service_started
+
+  ms-transaction:
+    image: ms-transaction:latest
+    container_name: ms-transaction
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/banking_system
+      DB_USERNAME: springstudent
+      DB_PASSWORD: springstudent
+      ACCOUNT_SERVICE_URL: http://ms-account:8082
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ms-account:
+        condition: service_started
+
+  ms-api-gateway:
+    image: ms-api-gateway:latest
+    container_name: ms-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: my-super-secret-jwt-key-for-banking-system-2026
+      USER_SERVICE_URL: http://ms-user:8081
+      ACCOUNT_SERVICE_URL: http://ms-account:8082
+      TRANSACTION_SERVICE_URL: http://ms-transaction:8083
+    depends_on:
+      - ms-user
+      - ms-account
+      - ms-transaction
+
+volumes:
+  mysql_data:
