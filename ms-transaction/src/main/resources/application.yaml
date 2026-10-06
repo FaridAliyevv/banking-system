@@ -5,9 +5,9 @@ spring:
   application:
     name: ms-transaction
   datasource:
-    url: jdbc:mysql://localhost:3306/banking_system
+    url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
 account-service:
-  url: http://localhost:8082
+  url: ${ACCOUNT_SERVICE_URL}
