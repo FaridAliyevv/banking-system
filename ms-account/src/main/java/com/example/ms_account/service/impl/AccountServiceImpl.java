@@ -13,6 +13,7 @@ import com.example.ms_account.service.AccountService;
 import com.example.ms_account.util.IbanGenerator;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,12 +28,14 @@ public class AccountServiceImpl implements AccountService {
     private final UserClient userClient;
 
     @Override
-    public AccountResponse createAccount(CreateAccountRequest request) {
+    public AccountResponse createAccount(CreateAccountRequest request, String token) {
 
         try {
-            userClient.getUserById(request.getUserId());
+            userClient.getUserById(request.getUserId(), token);
         } catch (FeignException.NotFound e) {
             throw new UserNotFoundException("User not found");
+        } catch (FeignException.Forbidden e) {
+            throw new AccessDeniedException("Access denied");
         }
 
         Account account = mapper.toEntity(request);

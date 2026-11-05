@@ -1,6 +1,5 @@
 package com.example.ms_account;
 
-import com.example.ms_account.util.IbanGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;

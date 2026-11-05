@@ -5,10 +5,12 @@ import com.example.ms_user.dto.request.LoginRequest;
 import com.example.ms_user.dto.request.UpdateUserRequest;
 import com.example.ms_user.dto.response.LoginResponse;
 import com.example.ms_user.dto.response.UserResponse;
+import com.example.ms_user.security.JwtService;
 import com.example.ms_user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static com.example.ms_user.util.TestConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -24,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
     @Autowired
@@ -32,14 +36,17 @@ class UserControllerTest {
     @MockitoBean
     private UserService service;
 
+    @MockitoBean
+    private JwtService jwtService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
     void testLogin() throws Exception {
         LoginRequest request = new LoginRequest();
-        request.setEmail("john@gmail.com");
-        request.setPassword("12345678");
+        request.setEmail(EMAIL);
+        request.setPassword(PASSWORD);
 
         LoginResponse response = new LoginResponse("token");
 
@@ -53,11 +60,13 @@ class UserControllerTest {
 
     @Test
     void testCreateUser() throws Exception{
-        CreateUserRequest request = new CreateUserRequest();
-        request.setFirstName("John");
-        request.setLastName("Smith");
-        request.setEmail("john@gmail.com");
-        request.setPassword("12345678");
+
+        CreateUserRequest request = CreateUserRequest.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .email(EMAIL)
+                .password(PASSWORD)
+                .build();
 
         UserResponse response = new UserResponse();
 
@@ -72,13 +81,11 @@ class UserControllerTest {
 
     @Test
     void testGetById() throws Exception {
-        Long userId = 1L;
-
         UserResponse response = new UserResponse();
 
-        when(service.getUserById(userId)).thenReturn(response);
+        when(service.getUserById(USER_ID)).thenReturn(response);
 
-        mockMvc.perform(get("/users/{id}", userId))
+        mockMvc.perform(get("/users/{id}", USER_ID))
                 .andExpect(status().isOk());
     }
 
@@ -96,20 +103,19 @@ class UserControllerTest {
 
     @Test
     void testUpdateUser() throws Exception {
-        Long userId = 1L;
-
-        UpdateUserRequest request = new UpdateUserRequest();
-        request.setFirstName("John");
-        request.setLastName("Smith");
-        request.setEmail("john@gmail.com");
-        request.setPassword("12345678");
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .email(EMAIL)
+                .password(PASSWORD)
+                .build();
 
         UserResponse response = new UserResponse();
 
-        when(service.updateUser(eq(userId), any(UpdateUserRequest.class)))
+        when(service.updateUser(eq(USER_ID), any(UpdateUserRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/users/{id}", userId)
+        mockMvc.perform(put("/users/{id}", USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -117,11 +123,9 @@ class UserControllerTest {
 
     @Test
     void testDeleteUserById() throws Exception {
-        Long userId = 1L;
+        doNothing().when(service).deleteUser(USER_ID);
 
-        doNothing().when(service).deleteUser(userId);
-
-        mockMvc.perform(delete("/users/{id}", userId))
+        mockMvc.perform(delete("/users/{id}", USER_ID))
                 .andExpect(status().isOk());
     }
 }

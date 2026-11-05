@@ -13,8 +13,11 @@ import com.example.ms_transaction.enums.TransactionType;
 import com.example.ms_transaction.exception.*;
 import com.example.ms_transaction.mapper.TransactionMapper;
 import com.example.ms_transaction.repository.TransactionRepository;
+import com.example.ms_transaction.security.JwtService;
 import com.example.ms_transaction.service.TransactionService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,12 +31,15 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository repository;
     private final TransactionMapper mapper;
     private final AccountClient client;
+    private final JwtService jwtService;
 
     @Override
-    public TransactionResponse transfer(TransferRequest request) {
+    public TransactionResponse transfer(TransferRequest request, String token) {
 
-        AccountResponse fromIban = client.getAccountByIban(request.getFromIban());
-        AccountResponse toIban = client.getAccountByIban(request.getToIban());
+        String serviceToken = "Bearer " + jwtService.generateServiceToken();
+
+        AccountResponse fromIban = client.getAccountByIban(request.getFromIban(), token);
+        AccountResponse toIban = client.getAccountByIban(request.getToIban(), serviceToken);
 
         Transaction transaction = mapper.toEntity(request);
 
@@ -72,7 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidAmountException("Amount must be greater than zero");
         }
 
-        if (fromIban.getBalance().compareTo(request.getAmount()) <= 0) {
+        if (fromIban.getBalance().compareTo(request.getAmount()) < 0) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -82,12 +88,14 @@ public class TransactionServiceImpl implements TransactionService {
 
         client.decreaseBalance(
                 request.getFromIban(),
-                request.getAmount()
+                request.getAmount(),
+                serviceToken
         );
 
         client.increaseBalance(
                 request.getToIban(),
-                request.getAmount()
+                request.getAmount(),
+                serviceToken
         );
 
         transaction.setTransactionStatus(TransactionStatus.COMPLETED);
@@ -99,9 +107,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public TransactionResponse deposit(DepositRequest request) {
+    public TransactionResponse deposit(DepositRequest request, String token) {
 
-        AccountResponse account = client.getAccountByIban(request.getToIban());
+        String serviceToken = "Bearer " + jwtService.generateServiceToken();
+
+        AccountResponse account = getOwnAccount(request.getToIban(), token);
         Transaction transaction = mapper.toEntity(request);
         transaction.setTransactionType(TransactionType.DEPOSIT);
         transaction.setCreatedAt(LocalDateTime.now());
@@ -124,7 +134,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         client.increaseBalance(
                 request.getToIban(),
-                request.getAmount()
+                request.getAmount(),
+                serviceToken
         );
 
         transaction.setTransactionStatus(TransactionStatus.COMPLETED);
@@ -136,9 +147,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public TransactionResponse withdrawal(WithdrawalRequest request) {
+    public TransactionResponse withdrawal(WithdrawalRequest request, String token) {
 
-        AccountResponse account = client.getAccountByIban(request.getFromIban());
+        String serviceToken = "Bearer " + jwtService.generateServiceToken();
+
+        AccountResponse account = getOwnAccount(request.getFromIban(), token);
 
         Transaction transaction = mapper.toEntity(request);
         transaction.setTransactionType(TransactionType.WITHDRAWAL);
@@ -160,7 +173,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidAmountException("Amount must be greater than zero");
         }
 
-        if (account.getBalance().compareTo(request.getAmount()) <= 0) {
+        if (account.getBalance().compareTo(request.getAmount()) < 0) {
 
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             repository.save(transaction);
@@ -170,7 +183,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         client.decreaseBalance(
                 request.getFromIban(),
-                request.getAmount()
+                request.getAmount(),
+                serviceToken
         );
 
         transaction.setTransactionStatus(TransactionStatus.COMPLETED);
@@ -201,12 +215,22 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<TransactionResponse> getTransactionsByIban(String iban) {
+    public List<TransactionResponse> getTransactionsByIban(String iban, String token) {
+
+        getOwnAccount(iban, token);
 
         List<Transaction> transactions = repository.findByFromIbanOrToIban(iban, iban);
 
         return transactions.stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    private AccountResponse getOwnAccount(String iban, String token) {
+        try {
+            return client.getAccountByIban(iban, token);
+        } catch (FeignException e) {
+            throw new AccessDeniedException("Access denied");
+        }
     }
 }

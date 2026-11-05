@@ -28,7 +28,7 @@ public class JwtService {
                     .parseSignedClaims(token);
 
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             return false;
         }
     }

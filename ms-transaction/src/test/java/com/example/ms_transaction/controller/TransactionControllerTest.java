@@ -4,27 +4,36 @@ import com.example.ms_transaction.dto.request.DepositRequest;
 import com.example.ms_transaction.dto.request.TransferRequest;
 import com.example.ms_transaction.dto.request.WithdrawalRequest;
 import com.example.ms_transaction.dto.response.TransactionResponse;
+import com.example.ms_transaction.security.JwtService;
 import com.example.ms_transaction.service.TransactionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.example.ms_transaction.util.TestConstants.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TransactionController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class TransactionControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @MockitoBean
     private TransactionService service;
@@ -34,93 +43,81 @@ class TransactionControllerTest {
 
     @Test
     void testTransfer() throws Exception {
-
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
-        TransactionResponse response = new TransactionResponse();
-
-        when(service.transfer(request)).thenReturn(response);
+        when(service.transfer(any(TransferRequest.class), eq(TOKEN)))
+                .thenReturn(new TransactionResponse());
 
         mockMvc.perform(post("/transactions/transfer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void testDeposit() throws Exception {
-
         DepositRequest request = DepositRequest.builder()
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("deposit description")
+                .description(DEPOSIT_DESCRIPTION)
                 .build();
 
-        TransactionResponse response = new TransactionResponse();
-
-        when(service.deposit(request)).thenReturn(response);
+        when(service.deposit(any(DepositRequest.class), eq(TOKEN)))
+                .thenReturn(new TransactionResponse());
 
         mockMvc.perform(post("/transactions/deposit")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void testWithdrawal() throws Exception {
-
         WithdrawalRequest request = WithdrawalRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .fromIban(FROM_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("withdrawal description")
+                .description(WITHDRAWAL_DESCRIPTION)
                 .build();
 
-        TransactionResponse response = new TransactionResponse();
-
-        when(service.withdrawal(request)).thenReturn(response);
+        when(service.withdrawal(any(WithdrawalRequest.class), eq(TOKEN)))
+                .thenReturn(new TransactionResponse());
 
         mockMvc.perform(post("/transactions/withdrawal")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void testGetTransactionById() throws Exception {
-        Long transactionId = 1L;
+        when(service.getTransactionById(ID)).thenReturn(new TransactionResponse());
 
-        TransactionResponse response = new TransactionResponse();
-
-        when(service.getTransactionById(transactionId)).thenReturn(response);
-
-        mockMvc.perform(get("/transactions/{id}", transactionId))
+        mockMvc.perform(get("/transactions/{id}", ID))
                 .andExpect(status().isOk());
     }
 
     @Test
     void testGetTransactionsByIban() throws Exception {
-        String iban = "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD";
+        when(service.getTransactionsByIban(IBAN, TOKEN))
+                .thenReturn(List.of(new TransactionResponse(), new TransactionResponse()));
 
-        TransactionResponse response1 = new TransactionResponse();
-        TransactionResponse response2 = new TransactionResponse();
-
-        when(service.getTransactionsByIban(iban)).thenReturn(List.of(response1, response2));
-
-        mockMvc.perform(get("/transactions/account/{iban}", iban))
+        mockMvc.perform(get("/transactions/account/{iban}", IBAN)
+                        .header("Authorization", TOKEN))
                 .andExpect(status().isOk());
     }
 
     @Test
     void testGetAllTransactions() throws Exception {
-        TransactionResponse response1 = new TransactionResponse();
-        TransactionResponse response2 = new TransactionResponse();
-
-        when(service.getAllTransactions()).thenReturn(List.of(response1, response2));
+        when(service.getAllTransactions())
+                .thenReturn(List.of(new TransactionResponse(), new TransactionResponse()));
 
         mockMvc.perform(get("/transactions"))
                 .andExpect(status().isOk());

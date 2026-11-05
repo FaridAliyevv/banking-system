@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-service
+              uri: ${USER_SERVICE_URL}
+              predicates:
+                - Path=/users/**
+
+            - id: account-service
+              uri: ${ACCOUNT_SERVICE_URL}
+              predicates:
+                - Path=/accounts/**
+
+            - id: transaction-service
+              uri: ${TRANSACTION_SERVICE_URL}
+              predicates:
+                - Path=/transactions/**
+
+            - id: user-docs
+              uri: ${USER_SERVICE_URL}
+              predicates:
+                - Path=/user-service/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: account-docs
+              uri: ${ACCOUNT_SERVICE_URL}
+              predicates:
+                - Path=/account-service/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+            - id: transaction-docs
+              uri: ${TRANSACTION_SERVICE_URL}
+              predicates:
+                - Path=/transaction-service/v3/api-docs
+              filters:
+                - StripPrefix=1
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: ms-user
+        url: /user-service/v3/api-docs
+      - name: ms-account
+        url: /account-service/v3/api-docs
+      - name: ms-transaction
+        url: /transaction-service/v3/api-docs
+
+jwt:
+  secret: ${JWT_SECRET}

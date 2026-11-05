@@ -14,17 +14,22 @@ import com.example.ms_transaction.enums.TransactionType;
 import com.example.ms_transaction.exception.*;
 import com.example.ms_transaction.mapper.TransactionMapper;
 import com.example.ms_transaction.repository.TransactionRepository;
+import com.example.ms_transaction.security.JwtService;
+import feign.FeignException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import static com.example.ms_transaction.util.TestConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -40,6 +45,9 @@ class TransactionServiceImplTest {
     @Mock
     private AccountClient client;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private TransactionServiceImpl service;
 
@@ -47,25 +55,25 @@ class TransactionServiceImplTest {
     void testTransfer() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -76,9 +84,9 @@ class TransactionServiceImplTest {
 
         TransactionResponse response = new TransactionResponse();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
@@ -86,7 +94,7 @@ class TransactionServiceImplTest {
 
         when(mapper.toResponse(savedTransaction)).thenReturn(response);
 
-        TransactionResponse result = service.transfer(request);
+        TransactionResponse result = service.transfer(request, TOKEN);
 
         assertEquals(response, result);
         assertEquals(TransactionType.TRANSFER, transaction.getTransactionType());
@@ -97,25 +105,25 @@ class TransactionServiceImplTest {
     void testTransfer_shouldThrowException_whenSourceAccountNotActive() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.BLOCKED)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -123,16 +131,16 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InactiveAccountException exception = assertThrows(InactiveAccountException.class,
-                () -> service.transfer(request));
+                () -> service.transfer(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Source account is not active", exception.getMessage());
@@ -142,25 +150,25 @@ class TransactionServiceImplTest {
     void testTransfer_shouldThrowException_whenDestinationAccountNotActive() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.BLOCKED)
@@ -168,16 +176,16 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InactiveAccountException exception = assertThrows(InactiveAccountException.class,
-                () -> service.transfer(request));
+                () -> service.transfer(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Destination account is not active", exception.getMessage());
@@ -187,25 +195,25 @@ class TransactionServiceImplTest {
     void testTransfer_shouldThrowException_whenSourceAndDestinationAreEqual() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(TO_IBAN)
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -213,16 +221,16 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(fromAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidTransactionException exception = assertThrows(InvalidTransactionException.class,
-                () -> service.transfer(request));
+                () -> service.transfer(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Source and destination must be different", exception.getMessage());
@@ -232,25 +240,25 @@ class TransactionServiceImplTest {
     void testTransfer_shouldThrowException_whenAmountIsZero() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(BigDecimal.ZERO)
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -258,16 +266,16 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidAmountException exception = assertThrows(InvalidAmountException.class,
-                () -> service.transfer(request));
+                () -> service.transfer(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -277,25 +285,25 @@ class TransactionServiceImplTest {
     void testTransfer_shouldThrowException_whenAmountIsNull() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(null)
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -303,16 +311,16 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidAmountException exception = assertThrows(InvalidAmountException.class,
-                () -> service.transfer(request));
+                () -> service.transfer(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -322,25 +330,25 @@ class TransactionServiceImplTest {
     void testTransfer_shouldThrowException_whenBalanceIsInsufficient() {
 
         TransferRequest request = TransferRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .fromIban(FROM_IBAN)
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("600.00"))
-                .description("transfer description")
+                .description(TRANSFER_DESCRIPTION)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -348,16 +356,16 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InsufficientBalanceException exception = assertThrows(InsufficientBalanceException.class,
-                () -> service.transfer(request));
+                () -> service.transfer(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Insufficient balance", exception.getMessage());
@@ -367,14 +375,14 @@ class TransactionServiceImplTest {
     void testDeposit() {
 
         DepositRequest request = DepositRequest.builder()
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -385,7 +393,7 @@ class TransactionServiceImplTest {
 
         TransactionResponse response = new TransactionResponse();
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
@@ -393,7 +401,7 @@ class TransactionServiceImplTest {
 
         when(mapper.toResponse(savedTransaction)).thenReturn(response);
 
-        TransactionResponse result = service.deposit(request);
+        TransactionResponse result = service.deposit(request, TOKEN);
 
         assertEquals(response, result);
         assertEquals(TransactionStatus.COMPLETED, transaction.getTransactionStatus());
@@ -403,14 +411,14 @@ class TransactionServiceImplTest {
     void testDeposit_shouldThrowException_whenAccountNotActive() {
 
         DepositRequest request = DepositRequest.builder()
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .toIban(TO_IBAN)
                 .amount(new BigDecimal("100.00"))
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.BLOCKED)
@@ -418,14 +426,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InactiveAccountException exception = assertThrows(InactiveAccountException.class,
-                () -> service.deposit(request));
+                () -> service.deposit(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("This account is not active", exception.getMessage());
@@ -435,14 +443,14 @@ class TransactionServiceImplTest {
     void testDeposit_shouldThrowException_whenAmountIsNull() {
 
         DepositRequest request = DepositRequest.builder()
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .toIban(TO_IBAN)
                 .amount(null)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -450,14 +458,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidAmountException exception = assertThrows(InvalidAmountException.class,
-                () -> service.deposit(request));
+                () -> service.deposit(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -467,14 +475,14 @@ class TransactionServiceImplTest {
     void testDeposit_shouldThrowException_whenAmountIsZero() {
 
         DepositRequest request = DepositRequest.builder()
-                .toIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .toIban(TO_IBAN)
                 .amount(BigDecimal.ZERO)
                 .build();
 
         AccountResponse toAccount = AccountResponse.builder()
-                .id(2L)
-                .userId(2L)
-                .iban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")
+                .id(ID2)
+                .userId(USER_ID2)
+                .iban(TO_IBAN)
                 .balance(new BigDecimal("700.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -482,14 +490,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA")).thenReturn(toAccount);
+        when(client.getAccountByIban(TO_IBAN, TOKEN)).thenReturn(toAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidAmountException exception = assertThrows(InvalidAmountException.class,
-                () -> service.deposit(request));
+                () -> service.deposit(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -499,14 +507,14 @@ class TransactionServiceImplTest {
     void testWithdrawal() {
 
         WithdrawalRequest request = WithdrawalRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .fromIban(FROM_IBAN)
                 .amount(new BigDecimal("100.00"))
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -516,7 +524,7 @@ class TransactionServiceImplTest {
         Transaction savedTransaction = new Transaction();
         TransactionResponse response = new TransactionResponse();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
@@ -524,7 +532,7 @@ class TransactionServiceImplTest {
 
         when(mapper.toResponse(savedTransaction)).thenReturn(response);
 
-        TransactionResponse result = service.withdrawal(request);
+        TransactionResponse result = service.withdrawal(request, TOKEN);
 
         assertEquals(response, result);
     }
@@ -533,14 +541,14 @@ class TransactionServiceImplTest {
     void testWithdrawal_shouldThrowException_whenAccountNotActive() {
 
         WithdrawalRequest request = WithdrawalRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .fromIban(FROM_IBAN)
                 .amount(new BigDecimal("100.00"))
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.BLOCKED)
@@ -548,14 +556,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InactiveAccountException exception = assertThrows(InactiveAccountException.class,
-                () -> service.withdrawal(request));
+                () -> service.withdrawal(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("This account is not active", exception.getMessage());
@@ -565,14 +573,14 @@ class TransactionServiceImplTest {
     void testWithdrawal_shouldThrowException_whenAmountIsNull() {
 
         WithdrawalRequest request = WithdrawalRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .fromIban(FROM_IBAN)
                 .amount(null)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -580,14 +588,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidAmountException exception = assertThrows(InvalidAmountException.class,
-                () -> service.withdrawal(request));
+                () -> service.withdrawal(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -597,14 +605,14 @@ class TransactionServiceImplTest {
     void testWithdrawal_shouldThrowException_whenAmountIsZero() {
 
         WithdrawalRequest request = WithdrawalRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .fromIban(FROM_IBAN)
                 .amount(BigDecimal.ZERO)
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -612,14 +620,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InvalidAmountException exception = assertThrows(InvalidAmountException.class,
-                () -> service.withdrawal(request));
+                () -> service.withdrawal(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -629,14 +637,14 @@ class TransactionServiceImplTest {
     void testWithdrawal_shouldThrowException_whenBalanceIsInsufficient() {
 
         WithdrawalRequest request = WithdrawalRequest.builder()
-                .fromIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .fromIban(FROM_IBAN)
                 .amount(new BigDecimal("800.00"))
                 .build();
 
         AccountResponse fromAccount = AccountResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .iban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")
+                .id(ID)
+                .userId(USER_ID)
+                .iban(FROM_IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -644,14 +652,14 @@ class TransactionServiceImplTest {
 
         Transaction transaction = new Transaction();
 
-        when(client.getAccountByIban("AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD")).thenReturn(fromAccount);
+        when(client.getAccountByIban(FROM_IBAN, TOKEN)).thenReturn(fromAccount);
 
         when(mapper.toEntity(request)).thenReturn(transaction);
 
         when(repository.save(transaction)).thenReturn(transaction);
 
         InsufficientBalanceException exception = assertThrows(InsufficientBalanceException.class,
-                () -> service.withdrawal(request));
+                () -> service.withdrawal(request, TOKEN));
 
         assertEquals(TransactionStatus.FAILED, transaction.getTransactionStatus());
         assertEquals("Insufficient balance", exception.getMessage());
@@ -659,30 +667,26 @@ class TransactionServiceImplTest {
 
     @Test
     void testGetTransactionById() {
-        Long transactionId = 1L;
-
         Transaction transaction = new Transaction();
-        transaction.setId(transactionId);
+        transaction.setId(TRANSACTION_ID);
 
         TransactionResponse response = new TransactionResponse();
 
-        when(repository.findById(transactionId)).thenReturn(Optional.of(transaction));
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
 
         when(mapper.toResponse(transaction)).thenReturn(response);
 
-        TransactionResponse result = service.getTransactionById(transactionId);
+        TransactionResponse result = service.getTransactionById(TRANSACTION_ID);
 
         assertEquals(response, result);
     }
 
     @Test
     void testGetTransactionById_shouldThrowException_whenTransactionNotFound() {
-        Long transactionId = 1L;
-
-        when(repository.findById(transactionId)).thenReturn(Optional.empty());
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Optional.empty());
 
         TransactionNotFoundException exception = assertThrows(TransactionNotFoundException.class,
-                () -> service.getTransactionById(transactionId));
+                () -> service.getTransactionById(TRANSACTION_ID));
 
         assertEquals("Transaction not found", exception.getMessage());
     }
@@ -711,26 +715,34 @@ class TransactionServiceImplTest {
 
     @Test
     void testGetAllTransactionsByIban() {
-        String iban = "AZ90 BHFE J8G3 LOCV 3EQS 4M1A CVFD";
-
         Transaction transaction1 = new Transaction();
         Transaction transaction2 = new Transaction();
 
         TransactionResponse response1 = new TransactionResponse();
         TransactionResponse response2 = new TransactionResponse();
 
-        when(repository.findByFromIbanOrToIban(iban, iban)).thenReturn(List.of(transaction1, transaction2));
+        when(repository.findByFromIbanOrToIban(IBAN, IBAN)).thenReturn(List.of(transaction1, transaction2));
 
         when(mapper.toResponse(transaction1)).thenReturn(response1);
 
         when(mapper.toResponse(transaction2)).thenReturn(response2);
 
-        List<TransactionResponse> result = service.getTransactionsByIban(iban);
+        List<TransactionResponse> result = service.getTransactionsByIban(IBAN, TOKEN);
 
         assertEquals(2, result.size());
 
         assertEquals(response1, result.get(0));
         assertEquals(response2, result.get(1));
+    }
+
+    @Test
+    void testGetTransactionsByIban_shouldThrowAccessDenied_whenAccountIsForbidden() {
+        FeignException.Forbidden forbidden = mock(FeignException.Forbidden.class);
+
+        when(client.getAccountByIban(IBAN, TOKEN)).thenThrow(forbidden);
+
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class,
+                () -> service.getTransactionsByIban(IBAN, TOKEN));
     }
 
 }

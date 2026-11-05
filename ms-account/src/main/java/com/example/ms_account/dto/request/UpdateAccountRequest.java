@@ -12,6 +12,5 @@ import lombok.*;
 public class UpdateAccountRequest {
 
     private AccountType accountType;
-
     private AccountStatus accountStatus;
 }
