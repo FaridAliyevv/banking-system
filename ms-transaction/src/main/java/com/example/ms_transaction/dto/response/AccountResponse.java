@@ -2,15 +2,15 @@ package com.example.ms_transaction.dto.response;
 
 import com.example.ms_transaction.enums.AccountStatus;
 import com.example.ms_transaction.enums.AccountType;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AccountResponse {
 
     private Long id;

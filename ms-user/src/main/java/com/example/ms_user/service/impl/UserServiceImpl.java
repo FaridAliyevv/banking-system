@@ -11,9 +11,10 @@ import com.example.ms_user.exception.EmailAlreadyExistsException;
 import com.example.ms_user.exception.InvalidCredentialsException;
 import com.example.ms_user.exception.InvalidUserDataException;
 import com.example.ms_user.exception.UserNotFoundException;
-import com.example.ms_user.security.JwtService;
+import com.example.ms_user.security.*;
 import lombok.RequiredArgsConstructor;
 import com.example.ms_user.mapper.UserMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.ms_user.repository.UserRepository;
 import com.example.ms_user.service.UserService;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
     private final UserMapper mapper;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse createUser(CreateUserRequest request) {
@@ -41,9 +43,8 @@ public class UserServiceImpl implements UserService {
 
         User user = mapper.toEntity(request);
 
-        if (user.getRole() == null) {
-            user.setRole(Role.USER);
-        }
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.USER);
 
         User savedUser = repository.save(user);
         UserResponse response = mapper.toResponse(savedUser);
@@ -82,10 +83,14 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
+        if (request.getPassword().length() < 8) {
+            throw new InvalidUserDataException("Password must contain at least 8 characters");
+        }
+
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User updatedUser = repository.save(user);
 
@@ -107,7 +112,7 @@ public class UserServiceImpl implements UserService {
         User user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
 
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 

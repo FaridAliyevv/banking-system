@@ -18,8 +18,9 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping
-    public AccountResponse createAccount(@RequestBody CreateAccountRequest request) {
-        return accountService.createAccount(request);
+    public AccountResponse createAccount(@RequestBody CreateAccountRequest request,
+                                         @RequestHeader("Authorization") String token) {
+        return accountService.createAccount(request, token);
     }
 
     @GetMapping("/{id}")

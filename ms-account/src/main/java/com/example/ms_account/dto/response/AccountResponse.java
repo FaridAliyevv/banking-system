@@ -12,14 +12,9 @@ import java.math.BigDecimal;
 public class AccountResponse {
 
     private Long id;
-
     private Long userId;
-
     private String iban;
-
     private BigDecimal balance;
-
     private AccountType accountType;
-
     private AccountStatus accountStatus;
 }

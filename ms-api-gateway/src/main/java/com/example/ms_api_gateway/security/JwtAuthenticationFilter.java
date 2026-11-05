@@ -25,8 +25,19 @@ public class JwtAuthenticationFilter implements org.springframework.cloud.gatewa
 
         System.out.println("JWT FILTER PATH: " + path);
 
-        if (path.equals("/users/login")) {
-            System.out.println("LOGIN PATH - SKIPPING JWT");
+        String method = exchange.getRequest()
+                .getMethod()
+                .name();
+
+        if (path.equals("/users/login") || path.equals("/users") && method.equals("POST")) {
+            System.out.println("PUBLIC PATH - SKIPPING JWT: " + path);
+            return chain.filter(exchange);
+        }
+
+        if (path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/webjars")
+                || path.endsWith("/v3/api-docs")) {
             return chain.filter(exchange);
         }
 

@@ -19,18 +19,21 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping("/transfer")
-    public TransactionResponse transfer(@Valid @RequestBody TransferRequest request) {
-        return transactionService.transfer(request);
+    public TransactionResponse transfer(@Valid @RequestBody TransferRequest request,
+                                        @RequestHeader("Authorization") String token) {
+        return transactionService.transfer(request, token);
     }
 
     @PostMapping("/deposit")
-    public TransactionResponse deposit(@Valid @RequestBody DepositRequest request) {
-        return transactionService.deposit(request);
+    public TransactionResponse deposit(@Valid @RequestBody DepositRequest request,
+                                       @RequestHeader("Authorization") String token) {
+        return transactionService.deposit(request, token);
     }
 
     @PostMapping("/withdrawal")
-    public TransactionResponse withdrawal(@Valid @RequestBody WithdrawalRequest request) {
-        return transactionService.withdrawal(request);
+    public TransactionResponse withdrawal(@Valid @RequestBody WithdrawalRequest request,
+                                          @RequestHeader("Authorization") String token) {
+        return transactionService.withdrawal(request, token);
     }
 
     @GetMapping("/{id}")
@@ -39,8 +42,9 @@ public class TransactionController {
     }
 
     @GetMapping("/account/{iban}")
-    public List<TransactionResponse> getTransactionsByIban(@PathVariable String iban) {
-        return transactionService.getTransactionsByIban(iban);
+    public List<TransactionResponse> getTransactionsByIban(@PathVariable String iban,
+                                                           @RequestHeader("Authorization") String token) {
+        return transactionService.getTransactionsByIban(iban, token);
     }
 
     @GetMapping

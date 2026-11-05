@@ -18,11 +18,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import static com.example.ms_account.util.TestConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -45,7 +47,7 @@ class AccountServiceImplTest {
     @Test
     void testCreateAccount() {
         CreateAccountRequest request = new CreateAccountRequest();
-        request.setUserId(1L);
+        request.setUserId(USER_ID);
         request.setAccountType(AccountType.DEBIT);
 
         Account account = new Account();
@@ -53,15 +55,15 @@ class AccountServiceImplTest {
         AccountResponse response = new AccountResponse();
 
         UserResponse userResponse = UserResponse.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Smith")
-                .email("john@gmail.com")
-                .password("12345678")
+                .id(USER_ID)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .email(EMAIL)
+                .password(PASSWORD)
                 .role(UserRole.USER)
                 .build();
 
-        when(client.getUserById(1L)).thenReturn(userResponse);
+        when(client.getUserById(USER_ID, TOKEN)).thenReturn(userResponse);
 
         when(mapper.toEntity(request)).thenReturn(account);
 
@@ -69,7 +71,7 @@ class AccountServiceImplTest {
 
         when(mapper.toResponse(savedAccount)).thenReturn(response);
 
-        AccountResponse result = service.createAccount(request);
+        AccountResponse result = service.createAccount(request, TOKEN);
 
         assertEquals(response, result);
     }
@@ -77,32 +79,44 @@ class AccountServiceImplTest {
     @Test
     void testCreateAccount_shouldThrowException_whenUserNotFound() {
         CreateAccountRequest request = new CreateAccountRequest();
-        request.setUserId(1L);
+        request.setUserId(USER_ID);
 
         FeignException.NotFound feignException = mock(FeignException.NotFound.class);
 
-        when(client.getUserById(1L)).thenThrow(feignException);
+        when(client.getUserById(USER_ID, TOKEN)).thenThrow(feignException);
 
         UserNotFoundException exception = assertThrows(UserNotFoundException.class,
-                () -> service.createAccount(request));
+                () -> service.createAccount(request, TOKEN));
 
         assertEquals("User not found", exception.getMessage());
     }
 
     @Test
-    void testGetAccountById() {
-        Long accountId = 1L;
+    void testCreateAccount_shouldThrowAccessDenied_whenUserClientReturnsForbidden() {
+        CreateAccountRequest request = new CreateAccountRequest();
+        request.setUserId(USER_ID);
+        request.setAccountType(AccountType.DEBIT);
 
+        FeignException.Forbidden forbidden = mock(FeignException.Forbidden.class);
+
+        when(client.getUserById(USER_ID, TOKEN)).thenThrow(forbidden);
+
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class,
+                () -> service.createAccount(request, TOKEN));
+    }
+
+    @Test
+    void testGetAccountById() {
         Account account = new Account();
-        account.setId(accountId);
+        account.setId(ACCOUNT_ID);
 
         AccountResponse response = new AccountResponse();
 
-        when(repository.findById(accountId)).thenReturn(Optional.of(account));
+        when(repository.findById(ACCOUNT_ID)).thenReturn(Optional.of(account));
 
         when(mapper.toResponse(account)).thenReturn(response);
 
-        AccountResponse result = service.getAccountById(accountId);
+        AccountResponse result = service.getAccountById(ACCOUNT_ID);
 
         assertNotNull(result);
         assertEquals(response, result);
@@ -110,30 +124,26 @@ class AccountServiceImplTest {
 
     @Test
     void testGetAccountById_shouldThrowException_whenAccountNotFound() {
-        Long accountId = 1L;
-
-        when(repository.findById(accountId)).thenReturn(Optional.empty());
+        when(repository.findById(ACCOUNT_ID)).thenReturn(Optional.empty());
 
         AccountNotFoundException exception = assertThrows(AccountNotFoundException.class,
-                () -> service.getAccountById(accountId));
+                () -> service.getAccountById(ACCOUNT_ID));
 
         assertEquals("Account not found", exception.getMessage());
     }
 
     @Test
     void testGetAccountByIban() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = new Account();
-        account.setIban(iban);
+        account.setIban(IBAN);
 
         AccountResponse response = new AccountResponse();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         when(mapper.toResponse(account)).thenReturn(response);
 
-        AccountResponse result = service.getAccountByIban(iban);
+        AccountResponse result = service.getAccountByIban(IBAN);
 
         assertNotNull(result);
         assertEquals(response, result);
@@ -141,33 +151,29 @@ class AccountServiceImplTest {
 
     @Test
     void testGetAccountByIban_shouldThrowException_whenAccountNotFound() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
-        when(repository.findByIban(iban)).thenReturn(Optional.empty());
+        when(repository.findByIban(IBAN)).thenReturn(Optional.empty());
 
         AccountNotFoundException exception = assertThrows(AccountNotFoundException.class,
-                () -> service.getAccountByIban(iban));
+                () -> service.getAccountByIban(IBAN));
 
         assertEquals("Account not found", exception.getMessage());
     }
 
     @Test
     void testGetAllAccountsByUserId() {
-        Long userId = 1L;
-
         Account account1 = new Account();
         Account account2 = new Account();
 
         AccountResponse response1 = new AccountResponse();
         AccountResponse response2 = new AccountResponse();
 
-        when(repository.findByUserId(userId)).thenReturn(List.of(account1, account2));
+        when(repository.findByUserId(USER_ID)).thenReturn(List.of(account1, account2));
 
         when(mapper.toResponse(account1)).thenReturn(response1);
 
         when(mapper.toResponse(account2)).thenReturn(response2);
 
-        List<AccountResponse> result = service.getAllAccountsByUserId(userId);
+        List<AccountResponse> result = service.getAllAccountsByUserId(USER_ID);
 
         assertEquals(2, result.size());
         assertEquals(response1, result.get(0));
@@ -198,56 +204,52 @@ class AccountServiceImplTest {
 
     @Test
     void testIncreaseBalance() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
-        service.increaseBalance(iban, amount);
+        service.increaseBalance(IBAN, amount);
 
         assertEquals(new BigDecimal("600.00"), account.getBalance());
     }
 
     @Test
     void testIncreaseBalance_shouldThrowException_whenAccountIsNotActive() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.BLOCKED)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         AccountNotActiveException exception = assertThrows(AccountNotActiveException.class,
-                () -> service.increaseBalance(iban, amount));
+                () -> service.increaseBalance(IBAN, amount));
 
         assertEquals("This account is not active", exception.getMessage());
     }
 
     @Test
     void testIncreaseBalance_shouldThrowException_whenAmountIsZero() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InvalidAmountException exception = assertThrows(
                 InvalidAmountException.class,
-                () -> service.increaseBalance(iban, BigDecimal.ZERO)
+                () -> service.increaseBalance(IBAN, BigDecimal.ZERO)
         );
 
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -255,19 +257,17 @@ class AccountServiceImplTest {
 
     @Test
     void testIncreaseBalance_shouldThrowException_whenAmountIsNull() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InvalidAmountException exception = assertThrows(
                 InvalidAmountException.class,
-                () -> service.increaseBalance(iban, null)
+                () -> service.increaseBalance(IBAN, null)
         );
 
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -275,19 +275,17 @@ class AccountServiceImplTest {
 
     @Test
     void testIncreaseBalance_shouldThrowException_whenAmountIsNegative() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InvalidAmountException exception = assertThrows(
                 InvalidAmountException.class,
-                () -> service.increaseBalance(iban, new BigDecimal("-100.00"))
+                () -> service.increaseBalance(IBAN, new BigDecimal("-100.00"))
         );
 
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -295,56 +293,52 @@ class AccountServiceImplTest {
 
     @Test
     void testDecreaseBalance() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
-        service.decreaseBalance(iban, amount);
+        service.decreaseBalance(IBAN, amount);
 
         assertEquals(new BigDecimal("400.00"), account.getBalance());
     }
 
     @Test
     void testDecreaseBalance_shouldThrowException_whenAccountIsNotActive() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("100.00");
 
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.BLOCKED)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         AccountNotActiveException exception = assertThrows(AccountNotActiveException.class,
-                () -> service.decreaseBalance(iban, amount));
+                () -> service.decreaseBalance(IBAN, amount));
 
         assertEquals("This account is not active", exception.getMessage());
     }
 
     @Test
     void testDecreaseBalance_shouldThrowException_whenAmountIsZero() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InvalidAmountException exception = assertThrows(
                 InvalidAmountException.class,
-                () -> service.decreaseBalance(iban, BigDecimal.ZERO)
+                () -> service.decreaseBalance(IBAN, BigDecimal.ZERO)
         );
 
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -352,19 +346,17 @@ class AccountServiceImplTest {
 
     @Test
     void testDecreaseBalance_shouldThrowException_whenAmountIsNull() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InvalidAmountException exception = assertThrows(
                 InvalidAmountException.class,
-                () -> service.decreaseBalance(iban, null)
+                () -> service.decreaseBalance(IBAN, null)
         );
 
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -372,19 +364,17 @@ class AccountServiceImplTest {
 
     @Test
     void testDecreaseBalance_shouldThrowException_whenAmountIsNegative() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
-
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InvalidAmountException exception = assertThrows(
                 InvalidAmountException.class,
-                () -> service.decreaseBalance(iban, new BigDecimal("-100.00"))
+                () -> service.decreaseBalance(IBAN, new BigDecimal("-100.00"))
         );
 
         assertEquals("Amount must be greater than zero", exception.getMessage());
@@ -392,33 +382,31 @@ class AccountServiceImplTest {
 
     @Test
     void testDecreaseBalance_shouldThrowException_whenBalanceIsInsufficient() {
-        String iban = "AZ90 QRYR Z4W2 KBDS 4RD0 9Z9B SFFA";
         BigDecimal amount = new BigDecimal("600.00");
 
         Account account = Account.builder()
-                .iban(iban)
+                .iban(IBAN)
                 .balance(new BigDecimal("500.00"))
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        when(repository.findByIban(iban)).thenReturn(Optional.of(account));
+        when(repository.findByIban(IBAN)).thenReturn(Optional.of(account));
 
         InsufficientBalanceException exception = assertThrows(InsufficientBalanceException.class,
-                () -> service.decreaseBalance(iban, amount));
+                () -> service.decreaseBalance(IBAN, amount));
 
         assertEquals("Insufficient balance", exception.getMessage());
     }
 
     @Test
     void testUpdateAccount() {
-        Long accountId = 1L;
         UpdateAccountRequest request = new UpdateAccountRequest();
 
         request.setAccountType(AccountType.SAVINGS);
         request.setAccountStatus(AccountStatus.BLOCKED);
 
         Account account = Account.builder()
-                .id(accountId)
+                .id(ACCOUNT_ID)
                 .balance(new BigDecimal("500.00"))
                 .accountType(AccountType.DEBIT)
                 .accountStatus(AccountStatus.ACTIVE)
@@ -426,13 +414,13 @@ class AccountServiceImplTest {
 
         AccountResponse response = new AccountResponse();
 
-        when(repository.findById(accountId)).thenReturn(Optional.of(account));
+        when(repository.findById(ACCOUNT_ID)).thenReturn(Optional.of(account));
 
         when(repository.save(account)).thenReturn(account);
 
         when(mapper.toResponse(account)).thenReturn(response);
 
-        AccountResponse result = service.updateAccount(accountId, request);
+        AccountResponse result = service.updateAccount(ACCOUNT_ID, request);
 
         assertEquals(response, result);
 
@@ -447,40 +435,33 @@ class AccountServiceImplTest {
 
     @Test
     void updateAccount_shouldThrowException_whenAccountNotFound() {
-        Long accountId = 1L;
-
         UpdateAccountRequest request = new UpdateAccountRequest();
 
-        when(repository.findById(accountId)).thenReturn(Optional.empty());
+        when(repository.findById(ACCOUNT_ID)).thenReturn(Optional.empty());
 
         AccountNotFoundException exception = assertThrows(AccountNotFoundException.class,
-                () -> service.updateAccount(accountId, request));
+                () -> service.updateAccount(ACCOUNT_ID, request));
 
         assertEquals("Account not found", exception.getMessage());
     }
 
     @Test
     void deleteAccount() {
-        Long accountId = 1L;
-
         Account account = new Account();
-        account.setId(accountId);
+        account.setId(ACCOUNT_ID);
 
-        when(repository.findById(accountId)).thenReturn(Optional.of(account));
+        when(repository.findById(ACCOUNT_ID)).thenReturn(Optional.of(account));
 
-        service.deleteAccount(accountId);
+        service.deleteAccount(ACCOUNT_ID);
     }
 
     @Test
     void deleteAccount_shouldThrowException_whenAccountNotFound() {
-        Long accountId = 1L;
-
-        when(repository.findById(accountId)).thenReturn(Optional.empty());
+        when(repository.findById(ACCOUNT_ID)).thenReturn(Optional.empty());
 
         AccountNotFoundException exception = assertThrows(AccountNotFoundException.class,
-                () -> service.deleteAccount(accountId));
+                () -> service.deleteAccount(ACCOUNT_ID));
 
         assertEquals("Account not found", exception.getMessage());
     }
-
 }
