@@ -1,7 +1,6 @@
 package com.example.ms_account.dto.request;
 
 import com.example.ms_account.enums.AccountType;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -15,6 +14,6 @@ public class CreateAccountRequest {
     @NotNull
     private Long userId;
 
-    @NotBlank
+    @NotNull
     private AccountType accountType;
 }

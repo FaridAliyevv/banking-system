@@ -1,0 +1,40 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",Arial,sans-serif;background:#f3f5f9;color:#1d2433;line-height:1.45}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:#1f3a68;color:#fff;flex-wrap:wrap;gap:8px}
+header .right{display:flex;align-items:center;gap:8px}
+header a,header button{color:#fff;text-decoration:none;background:none;border:1px solid #ffffff77;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:14px}
+header a:hover,header button:hover{background:#ffffff22}
+main.container{max-width:1050px;margin:24px auto;padding:0 16px;display:grid;gap:20px}
+.card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px #0001}
+.card h2{margin:0 0 14px;font-size:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{display:block;font-size:13px;color:#51607a;margin-bottom:4px}
+input,select{width:100%;padding:9px 10px;border:1px solid #c9d1e0;border-radius:6px;font-size:14px;background:#fff}
+input:focus,select:focus{outline:2px solid #3b6fd4;border-color:#3b6fd4}
+button.primary{background:#2f64d1;color:#fff;border:0;padding:10px 18px;border-radius:6px;font-size:14px;cursor:pointer;margin-top:12px}
+button.primary:hover{background:#2552ab}
+button.small{padding:5px 10px;font-size:12px;border:1px solid #c9d1e0;background:#fff;border-radius:5px;cursor:pointer}
+button.danger{color:#b3261e;border-color:#e7b4b0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #e6eaf2;vertical-align:middle}
+th{color:#51607a;font-weight:600;font-size:13px}
+.table-wrap{overflow-x:auto}
+.msg{padding:10px 12px;border-radius:6px;margin-bottom:12px;font-size:14px}
+.msg.error{background:#fdeceb;color:#8c1d18}
+.msg.success{background:#e6f5ea;color:#1b5e2f}
+.msg.info{background:#e8f0fe;color:#1b3f8f}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+.badge.ACTIVE,.badge.COMPLETED{background:#e6f5ea;color:#1b5e2f}
+.badge.BLOCKED,.badge.FAILED{background:#fdeceb;color:#8c1d18}
+.badge.CLOSED{background:#eceff4;color:#51607a}
+.plus{color:#1b7a3a;font-weight:600}
+.minus{color:#b3261e;font-weight:600}
+.muted{color:#6b7790;font-size:13px}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs button{flex:1;padding:9px;border:1px solid #c9d1e0;background:#fff;border-radius:6px;cursor:pointer;font-size:14px}
+.tabs button.active{background:#2f64d1;color:#fff;border-color:#2f64d1}
+.auth{max-width:420px;margin:60px auto;background:#fff;padding:28px;border-radius:12px;box-shadow:0 2px 10px #0002}
+.auth h1{margin:0 0 18px;text-align:center;color:#1f3a68}
+.auth form>div{margin-bottom:12px}
+.auth button.primary{width:100%}
+[hidden]{display:none!important}

@@ -23,8 +23,6 @@ public class JwtAuthenticationFilter implements org.springframework.cloud.gatewa
                 .getURI()
                 .getPath();
 
-        System.out.println("JWT FILTER PATH: " + path);
-
         String method = exchange.getRequest()
                 .getMethod()
                 .name();

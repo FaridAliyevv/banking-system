@@ -87,6 +87,15 @@ services:
       - ms-user
       - ms-account
       - ms-transaction
+  
+  frontend:
+    build: ./frontend
+    image: frontend:latest
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - ms-api-gateway
 
 volumes:
   mysql_data:

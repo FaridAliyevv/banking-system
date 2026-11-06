@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Banking — Admin panel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <strong>Banking — Administrator</strong>
+    <div class="right">
+      <a href="dashboard.html">Dashboard</a>
+      <button id="logout" type="button">Log out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="msg" class="msg" hidden></div>
+
+    <div class="tabs" id="main-tabs">
+      <button type="button" data-tab="users" class="active">Users</button>
+      <button type="button" data-tab="accounts">Accounts</button>
+      <button type="button" data-tab="transactions">Transactions</button>
+    </div>
+
+    <section id="tab-users" class="card">
+      <h2>Users</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>First name</th><th>Last name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-accounts" class="card" hidden>
+      <h2>Accounts</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>User ID</th><th>IBAN</th><th>Balance</th><th>Type</th><th>Status</th><th></th></tr></thead>
+          <tbody id="accounts-body"></tbody>
+        </table>
+      </div>
+      <form id="create-account-form" style="margin-top:14px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="min-width:140px"><label for="ca-user">Open account for User ID</label><input id="ca-user" type="number" min="1" required></div>
+        <div style="min-width:160px"><label for="ca-type">Type</label>
+          <select id="ca-type"><option>DEBIT</option><option>CREDIT</option><option>SAVINGS</option></select></div>
+        <button class="primary" type="submit" style="margin-top:0">Open</button>
+      </form>
+    </section>
+
+    <section id="tab-transactions" class="card" hidden>
+      <h2>All transactions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>From</th><th>To</th><th>Amount</th><th>Status</th><th>Description</th></tr></thead>
+          <tbody id="tx-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

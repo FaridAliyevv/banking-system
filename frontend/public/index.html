@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Banking — Sign in</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="auth">
+    <h1>Banking</h1>
+    <div class="tabs">
+      <button id="tab-login" class="active" type="button">Sign in</button>
+      <button id="tab-register" type="button">Sign up</button>
+    </div>
+    <div id="msg" class="msg" hidden></div>
+
+    <form id="login-form">
+      <div><label for="l-email">Email</label><input id="l-email" type="email" required></div>
+      <div><label for="l-pass">Password</label><input id="l-pass" type="password" required></div>
+      <button class="primary" type="submit">Sign in</button>
+    </form>
+
+    <form id="register-form" hidden>
+      <div><label for="r-first">First name</label><input id="r-first" required></div>
+      <div><label for="r-last">Last name</label><input id="r-last" required></div>
+      <div><label for="r-email">Email</label><input id="r-email" type="email" required></div>
+      <div><label for="r-pass">Password (at least 8 characters)</label><input id="r-pass" type="password" minlength="8" required></div>
+      <button class="primary" type="submit">Sign up</button>
+    </form>
+  </main>
+  <script src="app.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>
