@@ -83,8 +83,11 @@ public class UserServiceImpl implements UserService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        if (request.getPassword().length() < 8) {
-            throw new InvalidUserDataException("Password must contain at least 8 characters");
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (request.getPassword().length() < 8)
+                throw new InvalidUserDataException("Password must contain at least 8 characters");
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         user.setFirstName(request.getFirstName());

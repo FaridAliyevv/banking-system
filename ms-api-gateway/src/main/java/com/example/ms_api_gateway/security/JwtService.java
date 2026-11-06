@@ -1,6 +1,5 @@
 package com.example.ms_api_gateway.security;
 
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +27,7 @@ public class JwtService {
                     .parseSignedClaims(token);
 
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return false;
         }
     }

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Banking — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <strong>Banking</strong>
+    <div class="right">
+      <span id="who" class="muted" style="color:#dbe5ff"></span>
+      <a id="admin-link" href="admin.html" hidden>Admin panel</a>
+      <button id="logout" type="button">Log out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="msg" class="msg" hidden></div>
+
+    <section class="card">
+      <h2>Profile</h2>
+      <form id="profile-form">
+        <div class="grid">
+          <div><label for="p-first">First name</label><input id="p-first" required></div>
+          <div><label for="p-last">Last name</label><input id="p-last" required></div>
+          <div><label for="p-email">Email</label><input id="p-email" type="email" required></div>
+          <div><label for="p-pass">New password (optional)</label><input id="p-pass" type="password" minlength="8" autocomplete="new-password"></div>
+        </div>
+        <button class="primary" type="submit">Save</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>My accounts</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>IBAN</th><th>Type</th><th>Status</th><th>Balance</th><th></th></tr></thead>
+          <tbody id="accounts-body"></tbody>
+        </table>
+      </div>
+      <p id="no-accounts" class="muted" hidden>You don't have any accounts yet.</p>
+      <form id="create-account-form" style="margin-top:14px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="min-width:180px">
+          <label for="a-type">Open a new account</label>
+          <select id="a-type">
+            <option value="DEBIT">DEBIT</option>
+            <option value="CREDIT">CREDIT</option>
+            <option value="SAVINGS">SAVINGS</option>
+          </select>
+        </div>
+        <button class="primary" type="submit" style="margin-top:0">Open</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Transactions</h2>
+      <div class="tabs">
+        <button type="button" data-op="transfer" class="active">Transfer</button>
+        <button type="button" data-op="deposit">Deposit</button>
+        <button type="button" data-op="withdrawal">Withdrawal</button>
+      </div>
+      <form id="op-form">
+        <div class="grid">
+          <div id="f-from"><label for="o-from">From account</label><select id="o-from"></select></div>
+          <div id="f-to"><label for="o-to">To IBAN</label><input id="o-to" autocomplete="off"></div>
+          <div><label for="o-amount">Amount</label><input id="o-amount" type="number" step="0.01" min="0.01" required></div>
+          <div><label for="o-desc">Description</label><input id="o-desc" required></div>
+        </div>
+        <button class="primary" type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Transaction history</h2>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="min-width:260px">
+          <label for="h-iban">Account</label>
+          <select id="h-iban"></select>
+        </div>
+        <button id="h-load" class="primary" type="button" style="margin-top:0">Show</button>
+      </div>
+      <div class="table-wrap" style="margin-top:14px">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th>From</th><th>To</th><th>Amount</th><th>Status</th><th>Description</th></tr></thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
